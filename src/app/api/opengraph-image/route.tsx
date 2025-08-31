@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
           </h1>
           
           {/* Subtitle */}
-          <p tw="text-4xl mt-6 text-gray-400">Devconnect Argentina • Base Hackathon</p>
+          <p tw="text-4xl mt-6 text-gray-400">Devconnect Argentina • Live Chat</p>
           
           {/* Tagline */}
           <p tw="text-3xl mt-4 text-sky-400">Connect. Build. Ship.</p>
