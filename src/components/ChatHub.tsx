@@ -72,16 +72,16 @@ export function ChatHub() {
 
   // Room list view
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-      {/* Header with logo and app name */}
-      <div className="px-6 pt-8 pb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center">
-            <span className="text-2xl">💬</span>
+    <div className="h-full flex flex-col bg-gray-50 dark:elevation-0">
+      {/* Header with logo and app name - aligned with dark mode toggle */}
+      <div className="px-6 pt-4 pb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 bg-sky-500 dark:bg-sky-500 rounded-2xl flex items-center justify-center shadow-lg dark:shadow-sky-500/20">
+            <span className="text-xl">💬</span>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">farconnect</h1>
-            <p className="text-sm text-gray-600">Devconnect live chat</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white dark:text-glow">farconnect</h1>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Devconnect live chat</p>
           </div>
         </div>
       </div>
@@ -93,12 +93,12 @@ export function ChatHub() {
             <button
               key={room.id}
               onClick={() => setSelectedRoom(room.id)}
-              className="w-full bg-white rounded-2xl p-6 text-left transition-transform active:scale-[0.98]"
+              className="w-full bg-white dark:elevation-1 rounded-2xl p-6 text-left transition-premium active:scale-[0.98] shadow-sm dark:shadow-none border border-transparent dark:border-white/5 dark:hover:border-sky-500/20 dark:hover:elevation-2 dark:hover:shadow-sky-500/10"
             >
               <div className="flex items-center gap-4">
                 <span className="text-3xl">{room.emoji}</span>
                 <div className="flex-1">
-                  <span className="font-semibold text-lg text-gray-900">
+                  <span className="font-semibold text-lg text-gray-900 dark:text-white">
                     {room.name}
                   </span>
                 </div>

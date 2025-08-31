@@ -4,6 +4,8 @@ import { useMiniApp } from '@neynar/react';
 import { Welcome } from '~/components/Welcome';
 import { ChatHub } from '~/components/ChatHub';
 import { useState, useEffect, useRef } from 'react';
+import { ThemeProvider } from '~/contexts/ThemeContext';
+import { ThemeToggle } from './ThemeToggle';
 
 export default function App() {
   const { isSDKLoaded, context } = useMiniApp();
@@ -69,34 +71,35 @@ export default function App() {
   // Loading state - minimal
   if (!isSDKLoaded || isVerified === null) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white">
-        <div className="w-12 h-12 border-3 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
-      </div>
+      <ThemeProvider>
+        <div className="flex items-center justify-center h-screen bg-white dark:gradient-dark">
+          <div className="relative">
+            <div className="w-12 h-12 border-2 border-gray-200 dark:border-violet-500/30 border-t-violet-600 dark:border-t-violet-400 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 w-12 h-12 rounded-full dark:glow-accent animate-pulse"></div>
+          </div>
+        </div>
+      </ThemeProvider>
     );
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: 'white',
-        paddingTop: context?.client.safeAreaInsets?.top ?? 0,
-        paddingLeft: context?.client.safeAreaInsets?.left ?? 0,
-        paddingRight: context?.client.safeAreaInsets?.right ?? 0,
-        // NO padding bottom - let the keyboard push up naturally
-      }}
-    >
-      {!isVerified ? (
-        <Welcome onVerified={() => setIsVerified(true)} />
-      ) : (
-        <ChatHub />
-      )}
-    </div>
+    <ThemeProvider>
+      <div
+        className="fixed inset-0 flex flex-col bg-white dark:elevation-0 transition-colors"
+        style={{
+          paddingTop: context?.client.safeAreaInsets?.top ?? 0,
+          paddingLeft: context?.client.safeAreaInsets?.left ?? 0,
+          paddingRight: context?.client.safeAreaInsets?.right ?? 0,
+          // NO padding bottom - let the keyboard push up naturally
+        }}
+      >
+        <ThemeToggle />
+        {!isVerified ? (
+          <Welcome onVerified={() => setIsVerified(true)} />
+        ) : (
+          <ChatHub />
+        )}
+      </div>
+    </ThemeProvider>
   );
 }

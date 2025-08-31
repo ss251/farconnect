@@ -13,7 +13,7 @@ import type { Config } from "tailwindcss";
  * - Orange theme: primary: "#EA580C"
  */
 export default {
-    darkMode: "media",
+    darkMode: "class", // Changed from "media" to "class" for manual toggle
     content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",

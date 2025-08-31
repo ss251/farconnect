@@ -374,9 +374,9 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'white' }}>
+    <div className="h-full flex flex-col bg-white dark:elevation-0">
       {/* Header */}
-      <div style={{ padding: '20px 16px', borderBottom: '1px solid #e5e5e5', backgroundColor: 'white' }}>
+      <div className="px-4 py-5 border-b border-gray-200 dark:border-white/5 bg-white dark:elevation-1 dark:ios-backdrop">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button 
             onClick={onBack}
@@ -397,9 +397,9 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
             </svg>
           </button>
           <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111' }}>{roomName}</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{roomName}</h2>
             {activeUsers > 0 && (
-              <p style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                 {activeUsers} {activeUsers === 1 ? 'person' : 'people'} active
               </p>
             )}
@@ -411,11 +411,11 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-2 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400 rounded-full animate-spin"></div>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-400">No messages yet</p>
+            <p className="text-gray-400 dark:text-gray-600">No messages yet</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -438,8 +438,8 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
                             className="w-10 h-10 rounded-full flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                            <span className="text-sm font-medium text-gray-600">
+                          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                               {message.user?.username?.[0]?.toUpperCase() || '?'}
                             </span>
                           </div>
@@ -449,7 +449,7 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
                         <div className="flex items-center gap-2 mb-1">
                           <button
                             onClick={() => message.user?.fid && handleProfileClick(message.user.fid)}
-                            className="font-medium text-gray-900 text-sm hover:underline cursor-pointer"
+                            className="font-medium text-gray-900 dark:text-white text-sm hover:underline cursor-pointer"
                             style={{ background: 'none', border: 'none', padding: 0 }}
                           >
                             {message.user?.username}
@@ -462,10 +462,10 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
                             />
                           )}
                           {isOwnMessage && (
-                            <span className="text-xs text-gray-500">(You)</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">(You)</span>
                           )}
                         </div>
-                        <div className="inline-block rounded-2xl px-4 py-2 max-w-sm bg-gray-100 text-gray-900">
+                        <div className="inline-block rounded-2xl px-4 py-2 max-w-sm transition-premium bg-gray-100 dark:elevation-2 text-gray-900 dark:text-gray-100 border border-transparent dark:border-white/5">
                           <p className="break-words">
                             {message.content}
                           </p>
@@ -482,13 +482,7 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
       </div>
 
       {/* Input area */}
-      <div style={{ 
-        padding: '16px', 
-        borderTop: '1px solid #e5e5e5', 
-        backgroundColor: 'white',
-        display: 'flex',
-        gap: '12px'
-      }}>
+      <div className="p-4 border-t border-gray-200 dark:border-white/5 bg-white dark:elevation-1 dark:ios-backdrop flex gap-3">
         <input
           ref={inputRef}
           type="text"
@@ -502,30 +496,16 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
           }}
           placeholder="Message"
           disabled={!userId || isSending}
-          style={{ 
-            flex: 1,
-            padding: '12px 20px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '24px',
-            border: 'none',
-            fontSize: '16px',
-            outline: 'none',
-            color: '#000',  // Added black text color
-            opacity: (!userId || isSending) ? 0.5 : 1
-          }}
+          className="flex-1 px-5 py-3 bg-gray-100 dark:elevation-2 border border-transparent dark:border-white/5 rounded-3xl text-base text-black dark:text-white outline-none disabled:opacity-50 transition-premium focus:border-sky-500/30 dark:focus:border-sky-500/30 dark:focus:glow-sm"
         />
         <button
           onClick={sendMessage}
           disabled={!inputMessage.trim() || !userId || isSending}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: (!inputMessage.trim() || !userId || isSending) ? '#ccc' : '#000',
-            color: 'white',
-            borderRadius: '24px',
-            border: 'none',
-            fontWeight: '600',
-            cursor: (!inputMessage.trim() || !userId || isSending) ? 'not-allowed' : 'pointer'
-          }}
+          className={`px-6 py-3 rounded-3xl font-semibold transition-premium ${
+            (!inputMessage.trim() || !userId || isSending) 
+              ? 'bg-gray-300 dark:bg-white/5 text-gray-500 dark:text-gray-500 cursor-not-allowed' 
+              : 'bg-sky-500 text-white hover:bg-sky-400 cursor-pointer shadow-lg hover:shadow-sky-500/25 hover:scale-105 active:scale-100'
+          }`}
         >
           {isSending ? '...' : 'Send'}
         </button>

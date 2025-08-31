@@ -143,12 +143,12 @@ export function Welcome({ onVerified }: WelcomeProps) {
   // Show client verifier if we have a pending verification
   if (pendingVerification) {
     return (
-      <div className="h-full flex flex-col bg-white">
+      <div className="h-full flex flex-col bg-white dark:elevation-0">
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 glass glass-border rounded-3xl flex items-center justify-center mx-auto mb-6 dark:glow-sm">
             <span className="text-4xl">🔐</span>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Verifying Ticket</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white dark:text-glow mb-2">Verifying Ticket</h2>
           <ZupassClientVerifier
             pcd={pendingVerification.pcd}
             watermark={pendingVerification.watermark}
@@ -164,11 +164,11 @@ export function Welcome({ onVerified }: WelcomeProps) {
       {/* Simple header */}
       <div className="px-6 pt-12 pb-8">
         <div className="text-center">
-          <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 glass glass-border rounded-3xl flex items-center justify-center mx-auto mb-4 dark:glow-sm">
             <span className="text-4xl">🎫</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Devconnect</h1>
-          <p className="text-gray-600 mt-2">Buenos Aires 2025</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white dark:text-glow">Devconnect</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Buenos Aires 2025</p>
         </div>
       </div>
 
@@ -178,7 +178,7 @@ export function Welcome({ onVerified }: WelcomeProps) {
           {/* User info - minimal */}
           {context?.user && (
             <div className="text-center mb-8">
-              <p className="text-gray-700 text-lg">
+              <p className="text-gray-700 dark:text-gray-300 text-lg">
                 Welcome, @{context.user.username}
               </p>
             </div>
@@ -188,7 +188,7 @@ export function Welcome({ onVerified }: WelcomeProps) {
           <button
             onClick={handleVerify}
             disabled={isVerifying}
-            className="bg-black text-white rounded-2xl py-4 px-8 text-lg font-semibold hover:bg-gray-800 active:scale-[0.98] transition-transform disabled:opacity-50"
+            className="bg-sky-500 text-white rounded-2xl py-4 px-8 text-lg font-semibold hover:bg-sky-400 active:scale-[0.98] transition-premium disabled:opacity-50 shadow-lg hover:shadow-sky-500/25 hover:scale-105"
           >
             {isVerifying ? (
               <span className="flex items-center justify-center gap-3">
@@ -201,11 +201,11 @@ export function Welcome({ onVerified }: WelcomeProps) {
           </button>
 
           {error && (
-            <p className="text-red-500 text-center mt-4">{error}</p>
+            <p className="text-red-500 dark:text-red-400 text-center mt-4">{error}</p>
           )}
 
           {/* Minimal helper text */}
-          <p className="text-gray-500 text-sm text-center mt-6">
+          <p className="text-gray-500 dark:text-gray-500 text-sm text-center mt-6">
             Prove your attendance with ZuPass
           </p>
         </div>
