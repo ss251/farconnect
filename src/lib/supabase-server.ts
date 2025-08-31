@@ -32,6 +32,8 @@ export interface User {
   display_name: string;
   pfp_url?: string | null;
   zupass_verified: boolean;
+  has_talent_score?: boolean | null;
+  builder_score?: number | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -58,7 +60,7 @@ export const dbHelpers = {
       .from('users')
       .select('*')
       .eq('fid', fid)
-      .single();
+      .maybeSingle(); // Use maybeSingle() to handle 0 or 1 row
 
     if (error) {
       console.error('Error fetching user:', error);
@@ -70,16 +72,28 @@ export const dbHelpers = {
 
   // Create or update user
   async upsertUser(user: Partial<User> & { fid: number }): Promise<User | null> {
+    const updateData: any = {
+      fid: user.fid,
+      username: user.username || `user_${user.fid}`,
+      display_name: user.display_name || `User ${user.fid}`,
+      pfp_url: user.pfp_url,
+      updated_at: new Date().toISOString()
+    };
+
+    // Only update these fields if explicitly provided
+    if (user.zupass_verified !== undefined) {
+      updateData.zupass_verified = user.zupass_verified;
+    }
+    if (user.has_talent_score !== undefined) {
+      updateData.has_talent_score = user.has_talent_score;
+    }
+    if (user.builder_score !== undefined) {
+      updateData.builder_score = user.builder_score;
+    }
+
     const { data, error } = await supabaseAdmin
       .from('users')
-      .upsert({
-        fid: user.fid,
-        username: user.username || `user_${user.fid}`,
-        display_name: user.display_name || `User ${user.fid}`,
-        pfp_url: user.pfp_url,
-        zupass_verified: user.zupass_verified || false,
-        updated_at: new Date().toISOString()
-      }, {
+      .upsert(updateData, {
         onConflict: 'fid'
       })
       .select()
@@ -129,7 +143,7 @@ export const dbHelpers = {
       .select('id')
       .eq('user_id', userId)
       .eq('event_id', eventId)
-      .single();
+      .maybeSingle(); // Use maybeSingle() to handle 0 or 1 row
 
     return !!data;
   },
@@ -143,10 +157,80 @@ export const dbHelpers = {
         zupass_verifications (*)
       `)
       .eq('fid', fid)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single() to handle 0 rows
 
     if (error) {
       console.error('Error fetching user with verifications:', error);
+      return null;
+    }
+
+    return data;
+  },
+
+  // Get all rooms
+  async getRooms() {
+    const { data, error } = await supabaseAdmin
+      .from('rooms')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching rooms:', error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  // Get messages for a room
+  async getMessages(roomId: string) {
+    const { data, error } = await supabaseAdmin
+      .from('messages')
+      .select(`
+        *,
+        user:users!user_id (
+          fid,
+          username,
+          display_name,
+          pfp_url,
+          has_talent_score
+        )
+      `)
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching messages:', error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  // Create a message
+  async createMessage(message: { room_id: string; content: string; user_id: string }) {
+    const { data, error } = await supabaseAdmin
+      .from('messages')
+      .insert({
+        room_id: message.room_id,
+        content: message.content,
+        user_id: message.user_id,
+        created_at: new Date().toISOString()
+      })
+      .select(`
+        *,
+        user:users!user_id (
+          fid,
+          username,
+          display_name,
+          pfp_url,
+          has_talent_score
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error creating message:', error);
       return null;
     }
 

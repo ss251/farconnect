@@ -97,13 +97,13 @@ export async function POST(request: NextRequest) {
         attendee_email: ticketData.attendeeEmail || null,
         product_id: ticketData.productId || null,
         ticket_category: ticketData.ticketCategory ? String(ticketData.ticketCategory) : null,
-        proof_watermark: watermark || 'client-verified'
+        proof_watermark: watermark || Date.now().toString()
       });
     } else {
       console.log('Verification already exists for this event');
     }
 
-    console.log('Verification storage successful for FID:', fid);
+    console.log('Verification successfully stored for FID:', fid);
     
     return NextResponse.json({
       success: true,
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Storage error:', error);
+    console.error('Error storing verification:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Storage failed' },
       { status: 500 }

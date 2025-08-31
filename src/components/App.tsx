@@ -1,123 +1,102 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useMiniApp } from "@neynar/react";
-import { Header } from "~/components/ui/Header";
-import { Footer } from "~/components/ui/Footer";
-import { HomeTab, ActionsTab, ContextTab, WalletTab } from "~/components/ui/tabs";
-import { USE_WALLET } from "~/lib/constants";
-import { useNeynarUser } from "../hooks/useNeynarUser";
+import { useMiniApp } from '@neynar/react';
+import { Welcome } from '~/components/Welcome';
+import { ChatHub } from '~/components/ChatHub';
+import { useState, useEffect, useRef } from 'react';
 
-// --- Types ---
-export enum Tab {
-  Home = "home",
-  Actions = "actions",
-  Context = "context",
-  Wallet = "wallet",
-}
+export default function App() {
+  const { isSDKLoaded, context } = useMiniApp();
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
+  const checkRef = useRef(false);
 
-export interface AppProps {
-  title?: string;
-}
+  // VIP usernames that bypass verification (from env variable)
+  const VIP_USERNAMES = process.env.NEXT_PUBLIC_VIP_USERNAMES?.split(',').map(u => u.trim().toLowerCase()) || [];
 
-/**
- * App component serves as the main container for the mini app interface.
- * 
- * This component orchestrates the overall mini app experience by:
- * - Managing tab navigation and state
- * - Handling Farcaster mini app initialization
- * - Coordinating wallet and context state
- * - Providing error handling and loading states
- * - Rendering the appropriate tab content based on user selection
- * 
- * The component integrates with the Neynar SDK for Farcaster functionality
- * and Wagmi for wallet management. It provides a complete mini app
- * experience with multiple tabs for different functionality areas.
- * 
- * Features:
- * - Tab-based navigation (Home, Actions, Context, Wallet)
- * - Farcaster mini app integration
- * - Wallet connection management
- * - Error handling and display
- * - Loading states for async operations
- * 
- * @param props - Component props
- * @param props.title - Optional title for the mini app (defaults to "Neynar Starter Kit")
- * 
- * @example
- * ```tsx
- * <App title="My Mini App" />
- * ```
- */
-export default function App(
-  { title }: AppProps = { title: "Neynar Starter Kit" }
-) {
-  // --- Hooks ---
-  const {
-    isSDKLoaded,
-    context,
-    setInitialTab,
-    setActiveTab,
-    currentTab,
-  } = useMiniApp();
-
-  // --- Neynar user hook ---
-  const { user: neynarUser } = useNeynarUser(context || undefined);
-
-  // --- Effects ---
-  /**
-   * Sets the initial tab to "home" when the SDK is loaded.
-   * 
-   * This effect ensures that users start on the home tab when they first
-   * load the mini app. It only runs when the SDK is fully loaded to
-   * prevent errors during initialization.
-   */
+  // Check verification status with ref to prevent duplicate calls
   useEffect(() => {
-    if (isSDKLoaded) {
-      setInitialTab(Tab.Home);
-    }
-  }, [isSDKLoaded, setInitialTab]);
+    const checkVerification = async () => {
+      if (!context?.user?.fid || checkRef.current) return;
+      
+      checkRef.current = true;
+      
+      // Check if user is VIP (bypass verification)
+      const username = context.user.username?.toLowerCase();
+      if (username && VIP_USERNAMES.includes(username)) {
+        console.log(`VIP user @${username} - bypassing verification`);
+        
+        // Mark VIP user as zupass_verified in the database
+        fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fid: context.user.fid,
+            username: context.user.username,
+            display_name: context.user.displayName,
+            pfp_url: context.user.pfpUrl,
+            zupass_verified: true
+          })
+        }).catch(err => console.error('Error updating VIP user:', err));
+        
+        setIsVerified(true);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/zupass/verify?fid=${context.user.fid}`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsVerified(data.verified || false);
+        } else {
+          setIsVerified(false);
+        }
+      } catch (error) {
+        console.error('Error checking verification:', error);
+        setIsVerified(false);
+      }
+    };
 
-  // --- Early Returns ---
-  if (!isSDKLoaded) {
+    if (isSDKLoaded && context?.user) {
+      checkVerification();
+    }
+    
+    // Cleanup
+    return () => {
+      checkRef.current = false;
+    };
+  }, [isSDKLoaded, context?.user?.fid]);
+
+  // Loading state - minimal
+  if (!isSDKLoaded || isVerified === null) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="spinner h-8 w-8 mx-auto mb-4"></div>
-          <p>Loading SDK...</p>
-        </div>
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="w-12 h-12 border-3 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  // --- Render ---
   return (
     <div
       style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: 'white',
         paddingTop: context?.client.safeAreaInsets?.top ?? 0,
-        paddingBottom: context?.client.safeAreaInsets?.bottom ?? 0,
         paddingLeft: context?.client.safeAreaInsets?.left ?? 0,
         paddingRight: context?.client.safeAreaInsets?.right ?? 0,
+        // NO padding bottom - let the keyboard push up naturally
       }}
     >
-      {/* Header should be full width */}
-      <Header neynarUser={neynarUser} />
-
-      {/* Main content and footer should be centered */}
-      <div className="container py-2 pb-20">
-        {/* Main title */}
-        <h1 className="text-2xl font-bold text-center mb-4">{title}</h1>
-
-        {/* Tab content rendering */}
-        {currentTab === Tab.Home && <HomeTab />}
-        {currentTab === Tab.Actions && <ActionsTab />}
-        {currentTab === Tab.Context && <ContextTab />}
-        {currentTab === Tab.Wallet && <WalletTab />}
-
-        {/* Footer with navigation */}
-        <Footer activeTab={currentTab as Tab} setActiveTab={setActiveTab} showWallet={USE_WALLET} />
-      </div>
+      {!isVerified ? (
+        <Welcome onVerified={() => setIsVerified(true)} />
+      ) : (
+        <ChatHub />
+      )}
     </div>
   );
 }
-

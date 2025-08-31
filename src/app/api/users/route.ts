@@ -1,5 +1,6 @@
 import { NeynarAPIClient } from '@neynar/nodejs-sdk';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { dbHelpers } from '~/lib/supabase-server';
 
 export async function GET(request: Request) {
   const apiKey = process.env.NEYNAR_API_KEY;
@@ -33,6 +34,44 @@ export async function GET(request: Request) {
     console.error('Failed to fetch users:', error);
     return NextResponse.json(
       { error: 'Failed to fetch users. Please check your Neynar API key and try again.' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { fid, username, display_name, pfp_url, zupass_verified } = body;
+    
+    if (!fid) {
+      return NextResponse.json(
+        { error: 'FID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get or create user
+    const user = await dbHelpers.upsertUser({
+      fid,
+      username,
+      display_name,
+      pfp_url,
+      zupass_verified
+    });
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Failed to create/update user' },
+        { status: 500 }
+      );
+    }
+    
+    return NextResponse.json({ user });
+  } catch (error) {
+    console.error('Error creating/updating user:', error);
+    return NextResponse.json(
+      { error: 'Failed to create/update user' },
       { status: 500 }
     );
   }

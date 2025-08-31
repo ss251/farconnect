@@ -15,8 +15,12 @@ interface ClientVerifierProps {
 
 export function ZupassClientVerifier({ pcd, watermark, onVerificationComplete }: ClientVerifierProps) {
   const [status, setStatus] = useState('Initializing verification...');
+  const [hasCompleted, setHasCompleted] = useState(false);
   
   useEffect(() => {
+    // Prevent duplicate verification
+    if (hasCompleted) return;
+    
     const verifyInBrowser = async () => {
       try {
         setStatus('Loading verification libraries...');
@@ -72,6 +76,7 @@ export function ZupassClientVerifier({ pcd, watermark, onVerificationComplete }:
         
         setStatus('Verification complete!');
         
+        setHasCompleted(true);
         onVerificationComplete({
           verified: true,
           ticketData
@@ -80,6 +85,7 @@ export function ZupassClientVerifier({ pcd, watermark, onVerificationComplete }:
       } catch (error) {
         console.error('Browser verification error:', error);
         setStatus('Verification failed');
+        setHasCompleted(true);
         onVerificationComplete({
           verified: false,
           error: error instanceof Error ? error.message : 'Verification failed'
@@ -88,7 +94,7 @@ export function ZupassClientVerifier({ pcd, watermark, onVerificationComplete }:
     };
     
     verifyInBrowser();
-  }, [pcd, watermark, onVerificationComplete]);
+  }, [pcd, watermark]); // Remove onVerificationComplete from deps to avoid re-runs
   
   return (
     <div className="text-center text-sm text-gray-500">
