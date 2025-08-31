@@ -3,6 +3,7 @@
 import { useMiniApp } from '@neynar/react';
 import { Welcome } from '~/components/Welcome';
 import { ChatHub } from '~/components/ChatHub';
+import { OpenInApp } from '~/components/OpenInApp';
 import { useState, useEffect, useRef } from 'react';
 
 export default function App() {
@@ -65,6 +66,11 @@ export default function App() {
       checkRef.current = false;
     };
   }, [isSDKLoaded, context?.user?.fid]);
+
+  // Check if we're not in a Farcaster context (no user data after SDK loads)
+  if (isSDKLoaded && !context?.user) {
+    return <OpenInApp />;
+  }
 
   // Loading state - minimal
   if (!isSDKLoaded || isVerified === null) {
