@@ -76,8 +76,8 @@ export function ChatHub() {
       {/* Header with logo and app name - aligned with dark mode toggle */}
       <div className="px-6 pt-4 pb-6">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 bg-sky-500 dark:bg-sky-500 rounded-2xl flex items-center justify-center shadow-lg dark:shadow-sky-500/20">
-            <span className="text-xl">💬</span>
+          <div className="w-12 h-12 bg-sky-500 dark:bg-sky-500 rounded-2xl flex items-center justify-center shadow-lg dark:shadow-sky-500/20">
+            <span className="text-xl">🧉</span>
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white dark:text-glow">farconnect</h1>

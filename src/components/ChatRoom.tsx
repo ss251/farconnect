@@ -56,28 +56,42 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
 
   // Scroll to bottom only for initial load and new messages
   const scrollToBottom = (smooth: boolean = true) => {
-    messagesEndRef.current?.scrollIntoView({ 
-      behavior: smooth ? 'smooth' : 'instant',
-      block: 'end'
-    });
+    if (chatContainerRef.current) {
+      if (smooth) {
+        chatContainerRef.current.scrollTo({
+          top: chatContainerRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      } else {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    }
   };
 
-  // Only scroll on initial load and when sending messages
+  // Ref for the chat container
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Force scroll to bottom when messages load - multiple attempts to ensure it works
   useEffect(() => {
-    // Only scroll if it's the initial load (when loading becomes false)
-    if (!isLoading && messages.length > 0) {
-      // Use instant scroll for initial load
-      scrollToBottom(false);
+    if (!isLoading && messages.length > 0 && chatContainerRef.current) {
+      // Immediate scroll
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      
+      // Backup scroll after a micro-task
+      Promise.resolve().then(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      });
+      
+      // Final backup with RAF
+      requestAnimationFrame(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      });
     }
-  }, [isLoading]);
-
-  // Scroll when new messages are added (but not on initial load)
-  useEffect(() => {
-    if (messages.length > 0 && !isLoading) {
-      // Small delay to ensure DOM is updated
-      setTimeout(() => scrollToBottom(true), 50);
-    }
-  }, [messages.length]);
+  }, [isLoading, messages]);
 
   // Initialize user
   useEffect(() => {
@@ -512,7 +526,7 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
       </div>
 
       {/* Messages area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+      <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="w-8 h-8 border-2 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400 rounded-full animate-spin"></div>
