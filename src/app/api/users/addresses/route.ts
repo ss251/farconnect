@@ -40,10 +40,13 @@ export async function GET(request: NextRequest) {
     // Extract verified Ethereum addresses
     const ethAddresses = user.verified_addresses?.eth_addresses || [];
     
-    // Update user in database with verified addresses
+    // Update user in database with verified addresses and user info
     if (ethAddresses.length > 0) {
       await dbHelpers.upsertUser({
         fid: parseInt(fid),
+        username: user.username,
+        display_name: user.display_name,
+        pfp_url: user.pfp_url,
         verified_addresses: {
           eth_addresses: ethAddresses
         }

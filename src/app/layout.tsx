@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { getSession } from '~/auth';
 import '~/app/globals.css';
 import '~/styles/globals.css';
+import '@coinbase/onchainkit/styles.css';
 import { Providers } from '~/app/providers';
 import { APP_NAME, APP_DESCRIPTION } from '~/lib/constants';
 
