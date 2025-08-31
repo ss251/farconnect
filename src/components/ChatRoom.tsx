@@ -59,12 +59,13 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
     }
   }, [isLoading]);
 
-  // Scroll when user sends a message
+  // Scroll when new messages are added (but not on initial load)
   useEffect(() => {
-    if (isSending) {
-      scrollToBottom(true);
+    if (messages.length > 0 && !isLoading) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => scrollToBottom(true), 50);
     }
-  }, [isSending]);
+  }, [messages.length]);
 
   // Initialize user
   useEffect(() => {
@@ -273,26 +274,41 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
             async (payload) => {
               console.log('New message received:', payload);
               
-              // Check if this is a message from another user (not our own)
-              if (payload.new && payload.new.id && payload.new.user_id !== userId) {
-                // Fetch the complete message with user data
-                const response = await fetch(`/api/messages?roomId=${roomId}&messageId=${payload.new.id}`);
-                if (response.ok) {
-                  const { message } = await response.json();
-                  if (message) {
-                    setMessages(prev => {
-                      // Avoid duplicates
-                      const existingIds = new Set(prev.map(m => m.id));
-                      if (!existingIds.has(message.id)) {
-                        // Update cache with new message
-                        messageCache.addMessage(roomId, message);
-                        return [...prev, message];
-                      }
-                      return prev;
-                    });
-                    lastMessageId.current = message.id;
+              // Only process messages from other users
+              // The payload.new.user_id is the Supabase user ID, not the FID
+              if (payload.new && payload.new.id) {
+                // Always check for duplicates first
+                setMessages(prev => {
+                  const exists = prev.some(m => m.id === payload.new.id);
+                  if (exists) {
+                    console.log('Message already exists, skipping:', payload.new.id);
+                    return prev;
                   }
-                }
+                  
+                  // Only fetch and add if it's from another user
+                  if (payload.new.user_id !== userId) {
+                    // Fetch the complete message with user data asynchronously
+                    fetch(`/api/messages?roomId=${roomId}&messageId=${payload.new.id}`)
+                      .then(response => response.json())
+                      .then(({ message }) => {
+                        if (message) {
+                          setMessages(current => {
+                            // Double-check for duplicates
+                            const alreadyExists = current.some(m => m.id === message.id);
+                            if (alreadyExists) return current;
+                            
+                            // Update cache with new message
+                            messageCache.addMessage(roomId, message);
+                            lastMessageId.current = message.id;
+                            return [...current, message];
+                          });
+                        }
+                      })
+                      .catch(error => console.error('Error fetching message details:', error));
+                  }
+                  
+                  return prev;
+                });
               }
             }
           )
@@ -343,10 +359,17 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
       // Get the created message and add it immediately
       const { message } = await response.json();
       if (message) {
-        setMessages(prev => [...prev, message]);
+        setMessages(prev => {
+          // Check if message already exists to avoid duplicates
+          const exists = prev.some(m => m.id === message.id);
+          if (exists) return prev;
+          return [...prev, message];
+        });
         lastMessageId.current = message.id;
         // Update cache with sent message
         messageCache.addMessage(roomId, message);
+        // Scroll to bottom after message is added
+        setTimeout(() => scrollToBottom(true), 100);
       }
     } catch (error) {
       console.error('Error sending message:', error);
