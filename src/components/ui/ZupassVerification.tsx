@@ -77,8 +77,8 @@ export function ZupassVerification({ onVerificationComplete }: ZupassVerificatio
         },
         body: JSON.stringify({
           fid: fid,
-          username: context?.user?.username || `user_${fid}`,
-          displayName: context?.user?.displayName || `User ${fid}`,
+          username: context?.user?.username,
+          displayName: context?.user?.displayName,
           pfpUrl: context?.user?.pfpUrl || null,
           ticketData: result.ticketData,
           watermark: pendingPCD.watermark

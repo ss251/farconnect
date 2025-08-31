@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { roomId, content, userId } = body;
+    const { roomId, content, userId, messageType, metadata } = body;
     
     if (!roomId || !content || !userId) {
       return NextResponse.json(
@@ -90,7 +90,9 @@ export async function POST(request: NextRequest) {
     const message = await dbHelpers.createMessage({
       room_id: roomId,
       content,
-      user_id: userId
+      user_id: userId,
+      message_type: messageType || 'text',
+      metadata: metadata || null
     });
     
     if (!message) {

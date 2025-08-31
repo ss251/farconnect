@@ -6,6 +6,9 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { createAuthenticatedClient } from '~/lib/supabase-jwt';
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { messageCache } from '~/lib/message-cache';
+import { TipRequestMessage } from './TipRequestMessage';
+import { TipRequestModal } from './TipRequestModal';
+import { useAccount } from 'wagmi';
 
 interface ChatRoomProps {
   roomId: string;
@@ -19,12 +22,19 @@ interface Message {
   content: string;
   user_id: string;
   created_at: string;
+  message_type?: 'text' | 'tip_request';
+  metadata?: {
+    amount?: string;
+    note?: string;
+    recipient_address?: string;
+  };
   user: {
     fid: number;
     username: string;
     display_name: string;
     pfp_url?: string;
     has_talent_score?: boolean;
+    verified_addresses?: { eth_addresses?: string[] };
   };
 }
 
@@ -35,9 +45,11 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
   const [isSending, setIsSending] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [activeUsers, setActiveUsers] = useState(0);
+  const [showTipModal, setShowTipModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { context } = useMiniApp();
+  const { address } = useAccount();
   const channelRef = useRef<RealtimeChannel | null>(null);
   const lastMessageId = useRef<string | null>(null);
   const supabaseRef = useRef<SupabaseClient | null>(null);
@@ -78,6 +90,9 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
       const isVIP = username && VIP_USERNAMES.includes(username);
 
       try {
+        // Log context.user to see what fields are available
+        console.log('Context user data:', context.user);
+        
         // First, just create/update basic user info
         // For VIP users, we'll explicitly set talent scores to false/null below
         const response = await fetch('/api/users', {
@@ -85,8 +100,8 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fid: context.user.fid,
-            username: context.user.username || `user_${context.user.fid}`,
-            display_name: context.user.displayName || `User ${context.user.fid}`,
+            username: context.user.username,
+            display_name: context.user.displayName,
             pfp_url: context.user.pfpUrl
             // Don't touch verification or talent fields here - they're set separately
           })
@@ -95,6 +110,14 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
         if (response.ok) {
           const { user } = await response.json();
           setUserId(user.id);
+          
+          // Fetch and update user's verified addresses
+          fetch(`/api/users/addresses?fid=${context.user.fid}`)
+            .then(res => res.json())
+            .then(data => {
+              console.log('User addresses:', data.addresses);
+            })
+            .catch(err => console.error('Failed to fetch addresses:', err));
           
           // Check and update Talent score in background (skip for VIP users to avoid confusion)
           if (context?.user?.fid && !isVIP) {
@@ -277,38 +300,43 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
               // Only process messages from other users
               // The payload.new.user_id is the Supabase user ID, not the FID
               if (payload.new && payload.new.id) {
-                // Always check for duplicates first
-                setMessages(prev => {
-                  const exists = prev.some(m => m.id === payload.new.id);
-                  if (exists) {
-                    console.log('Message already exists, skipping:', payload.new.id);
-                    return prev;
-                  }
-                  
-                  // Only fetch and add if it's from another user
-                  if (payload.new.user_id !== userId) {
-                    // Fetch the complete message with user data asynchronously
-                    fetch(`/api/messages?roomId=${roomId}&messageId=${payload.new.id}`)
-                      .then(response => response.json())
-                      .then(({ message }) => {
-                        if (message) {
-                          setMessages(current => {
-                            // Double-check for duplicates
-                            const alreadyExists = current.some(m => m.id === message.id);
-                            if (alreadyExists) return current;
-                            
-                            // Update cache with new message
-                            messageCache.addMessage(roomId, message);
-                            lastMessageId.current = message.id;
-                            return [...current, message];
-                          });
+                const messageId = payload.new.id;
+                const messageUserId = payload.new.user_id;
+                
+                // Skip if it's our own message or if we already have this message
+                if (messageUserId === userId) {
+                  console.log('Skipping own message from realtime:', messageId);
+                  return;
+                }
+                
+                // Check if we already processed this message ID
+                if (lastMessageId.current === messageId) {
+                  console.log('Already processed this message:', messageId);
+                  return;
+                }
+                
+                // Fetch the complete message with user data
+                fetch(`/api/messages?roomId=${roomId}&messageId=${messageId}`)
+                  .then(response => response.json())
+                  .then(({ message }) => {
+                    if (message) {
+                      setMessages(current => {
+                        // Final duplicate check before adding
+                        const alreadyExists = current.some(m => m.id === message.id);
+                        if (alreadyExists) {
+                          console.log('Message already exists in state:', message.id);
+                          return current;
                         }
-                      })
-                      .catch(error => console.error('Error fetching message details:', error));
-                  }
-                  
-                  return prev;
-                });
+                        
+                        // Update last message ID and cache
+                        lastMessageId.current = message.id;
+                        const newMessages = [...current, message];
+                        messageCache.set(roomId, newMessages, activeUsers);
+                        return newMessages;
+                      });
+                    }
+                  })
+                  .catch(error => console.error('Error fetching message details:', error));
               }
             }
           )
@@ -332,6 +360,59 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
     };
   }, [roomId, userId, context?.user?.fid]);
 
+  // Send tip request
+  const sendTipRequest = async (amount: string, note: string) => {
+    if (!userId || isSending) return;
+
+    setIsSending(true);
+
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId,
+          content: `Requesting ${amount} USDC`,
+          userId,
+          messageType: 'tip_request',
+          metadata: {
+            amount,
+            note,
+            recipient_address: address || undefined
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send tip request');
+      }
+      
+      const { message } = await response.json();
+      if (message) {
+        // Store the message ID immediately to prevent duplicates from realtime
+        lastMessageId.current = message.id;
+        
+        setMessages(prev => {
+          const exists = prev.some(m => m.id === message.id);
+          if (exists) {
+            console.log('Tip request already exists, skipping:', message.id);
+            return prev;
+          }
+          const newMessages = [...prev, message];
+          // Update cache with sent message
+          messageCache.set(roomId, newMessages, activeUsers);
+          return newMessages;
+        });
+        
+        setTimeout(() => scrollToBottom(true), 100);
+      }
+    } catch (error) {
+      console.error('Error sending tip request:', error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   // Send message
   const sendMessage = async () => {
     if (!inputMessage.trim() || !userId || isSending) return;
@@ -347,7 +428,8 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
         body: JSON.stringify({
           roomId,
           content: messageText,
-          userId
+          userId,
+          messageType: 'text'
         })
       });
 
@@ -359,15 +441,22 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
       // Get the created message and add it immediately
       const { message } = await response.json();
       if (message) {
+        // Store the message ID immediately to prevent duplicates from realtime
+        lastMessageId.current = message.id;
+        
         setMessages(prev => {
           // Check if message already exists to avoid duplicates
           const exists = prev.some(m => m.id === message.id);
-          if (exists) return prev;
-          return [...prev, message];
+          if (exists) {
+            console.log('Message already exists, skipping:', message.id);
+            return prev;
+          }
+          const newMessages = [...prev, message];
+          // Update cache with sent message
+          messageCache.set(roomId, newMessages, activeUsers);
+          return newMessages;
         });
-        lastMessageId.current = message.id;
-        // Update cache with sent message
-        messageCache.addMessage(roomId, message);
+        
         // Scroll to bottom after message is added
         setTimeout(() => scrollToBottom(true), 100);
       }
@@ -378,14 +467,6 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
     }
   };
 
-  // Format time
-  const formatTime = (date: string) => {
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
 
   // Handle profile click to view profile
   const handleProfileClick = async (fid: number) => {
@@ -488,11 +569,22 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
                             <span className="text-xs text-gray-500 dark:text-gray-400">(You)</span>
                           )}
                         </div>
-                        <div className="inline-block rounded-2xl px-4 py-2 max-w-sm transition-premium bg-gray-100 dark:elevation-2 text-gray-900 dark:text-gray-100 border border-transparent dark:border-white/5">
-                          <p className="break-words">
-                            {message.content}
-                          </p>
-                        </div>
+                        {message.message_type === 'tip_request' && message.metadata ? (
+                          <TipRequestMessage
+                            amount={message.metadata.amount || '1'}
+                            recipientAddress={message.metadata.recipient_address || (isOwnMessage ? address : message.user?.verified_addresses?.eth_addresses?.[0])}
+                            recipientName={message.user?.username || 'User'}
+                            recipientAvatar={message.user?.pfp_url}
+                            note={message.metadata.note}
+                            isOwnMessage={isOwnMessage}
+                          />
+                        ) : (
+                          <div className="inline-block rounded-2xl px-4 py-2 max-w-sm transition-premium bg-gray-100 dark:elevation-2 text-gray-900 dark:text-gray-100 border border-transparent dark:border-white/5">
+                            <p className="break-words">
+                              {message.content}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -506,6 +598,20 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
 
       {/* Input area */}
       <div className="p-4 border-t border-gray-200 dark:border-white/5 bg-white dark:elevation-1 dark:ios-backdrop flex gap-3">
+        <button
+          onClick={() => setShowTipModal(true)}
+          disabled={!userId}
+          className="p-3 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors disabled:opacity-50"
+          title="Request tip"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700 dark:text-gray-300">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+            <path d="M16 12a4 4 0 0 1-8 0"/>
+            <path d="M12 2v4"/>
+            <path d="M12 18v4"/>
+          </svg>
+        </button>
         <input
           ref={inputRef}
           type="text"
@@ -533,6 +639,13 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
           {isSending ? '...' : 'Send'}
         </button>
       </div>
+
+      {/* Tip Request Modal */}
+      <TipRequestModal
+        isOpen={showTipModal}
+        onClose={() => setShowTipModal(false)}
+        onSend={sendTipRequest}
+      />
     </div>
   );
 }

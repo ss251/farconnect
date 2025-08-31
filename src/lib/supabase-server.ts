@@ -34,6 +34,9 @@ export interface User {
   zupass_verified: boolean;
   has_talent_score?: boolean | null;
   builder_score?: number | null;
+  verified_addresses?: {
+    eth_addresses?: string[];
+  } | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -74,8 +77,8 @@ export const dbHelpers = {
   async upsertUser(user: Partial<User> & { fid: number }): Promise<User | null> {
     const updateData: any = {
       fid: user.fid,
-      username: user.username || `user_${user.fid}`,
-      display_name: user.display_name || `User ${user.fid}`,
+      username: user.username,
+      display_name: user.display_name,
       pfp_url: user.pfp_url,
       updated_at: new Date().toISOString()
     };
@@ -89,6 +92,9 @@ export const dbHelpers = {
     }
     if (user.builder_score !== undefined) {
       updateData.builder_score = user.builder_score;
+    }
+    if (user.verified_addresses !== undefined) {
+      updateData.verified_addresses = user.verified_addresses;
     }
 
     const { data, error } = await supabaseAdmin
@@ -193,7 +199,8 @@ export const dbHelpers = {
           username,
           display_name,
           pfp_url,
-          has_talent_score
+          has_talent_score,
+          verified_addresses
         )
       `)
       .eq('room_id', roomId)
@@ -208,13 +215,21 @@ export const dbHelpers = {
   },
 
   // Create a message
-  async createMessage(message: { room_id: string; content: string; user_id: string }) {
+  async createMessage(message: { 
+    room_id: string; 
+    content: string; 
+    user_id: string;
+    message_type?: string;
+    metadata?: any;
+  }) {
     const { data, error } = await supabaseAdmin
       .from('messages')
       .insert({
         room_id: message.room_id,
         content: message.content,
         user_id: message.user_id,
+        message_type: message.message_type || 'text',
+        metadata: message.metadata || null,
         created_at: new Date().toISOString()
       })
       .select(`
@@ -224,7 +239,8 @@ export const dbHelpers = {
           username,
           display_name,
           pfp_url,
-          has_talent_score
+          has_talent_score,
+          verified_addresses
         )
       `)
       .single();
@@ -248,7 +264,8 @@ export const dbHelpers = {
           username,
           display_name,
           pfp_url,
-          has_talent_score
+          has_talent_score,
+          verified_addresses
         )
       `)
       .eq('id', messageId)
