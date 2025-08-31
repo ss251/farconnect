@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChatRoom } from './ChatRoom';
 import { useMiniApp } from '@neynar/react';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 // Define chat rooms - simplified
 const CHAT_ROOMS = [
@@ -31,6 +32,30 @@ const CHAT_ROOMS = [
 export function ChatHub() {
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const { context } = useMiniApp();
+  
+  const handleShare = async () => {
+    try {
+      // Use Farcaster SDK to compose a cast with embedded mini app
+      await sdk.actions.composeCast({
+        text: `Join me at Devconnect Argentina! 🇦🇷\n\nConnect with verified attendees, find your hackathon team, and chat with builders.\n\n`,
+        embeds: ['https://farconnect.social'] // This will embed the mini app
+      });
+    } catch (error) {
+      console.error('Error composing cast:', error);
+      // Fallback to regular share
+      const shareUrl = 'https://farconnect.social';
+      if (navigator.share) {
+        navigator.share({
+          title: 'Devconnect Argentina Chat',
+          text: 'Join me at Devconnect Argentina! Connect with builders and find your team.',
+          url: shareUrl
+        }).catch(console.log);
+      } else {
+        navigator.clipboard.writeText(shareUrl);
+        alert('Link copied to clipboard!');
+      }
+    }
+  };
 
 
   // Show chat room
@@ -48,9 +73,17 @@ export function ChatHub() {
   // Room list view
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      {/* Simple header */}
-      <div className="px-6 pt-8 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Rooms</h1>
+      {/* Header with logo and app name */}
+      <div className="px-6 pt-8 pb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center">
+            <span className="text-2xl">💬</span>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">farconnect</h1>
+            <p className="text-sm text-gray-600">Devconnect live chat</p>
+          </div>
+        </div>
       </div>
 
       {/* Rooms - simplified with huge touch targets */}

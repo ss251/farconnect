@@ -47,7 +47,15 @@ async function ensurePackageInitialized() {
   }
 }
 
+import { rateLimiters, rateLimit, rateLimitResponse } from '~/lib/rate-limiter';
+
 export async function POST(request: NextRequest) {
+  // Very strict rate limiting for verification
+  const rateLimitResult = await rateLimit(request, rateLimiters.verification, 5); // 5 verifications per 5 minutes
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
+
   try {
     console.log('Starting ZuPass verification...');
     

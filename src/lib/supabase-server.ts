@@ -235,5 +235,30 @@ export const dbHelpers = {
     }
 
     return data;
+  },
+
+  // Get a single message by ID
+  async getMessageById(messageId: string) {
+    const { data, error } = await supabaseAdmin
+      .from('messages')
+      .select(`
+        *,
+        user:users!user_id (
+          fid,
+          username,
+          display_name,
+          pfp_url,
+          has_talent_score
+        )
+      `)
+      .eq('id', messageId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching message:', error);
+      return null;
+    }
+
+    return data;
   }
 };

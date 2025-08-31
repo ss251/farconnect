@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { fid, username, display_name, pfp_url, zupass_verified } = body;
+    const { fid, username, display_name, pfp_url, zupass_verified, has_talent_score, builder_score } = body;
     
     if (!fid) {
       return NextResponse.json(
@@ -51,13 +51,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get or create user
+    // Get or create user - pass all fields including talent/builder scores
     const user = await dbHelpers.upsertUser({
       fid,
       username,
       display_name,
       pfp_url,
-      zupass_verified
+      zupass_verified,
+      has_talent_score,
+      builder_score
     });
     
     if (!user) {
