@@ -84,7 +84,11 @@ export const APP_ACCOUNT_ASSOCIATION: AccountAssociation | undefined =
         payload: "eyJkb21haW4iOiJmYXJjb25uZWN0Lm5ncm9rLmFwcCJ9",
         signature: "MHhjOWY1ZmM4YTg5MWQ2OWZiZWQ0ZTFhMGI0NWI4MGQzMDcyMGQ1NjlhYjNlZDk1YjkwNDU0OTU5ZWQyOGFmY2Q0MjI5NWY0MjFhM2M0NzNkZDJlZTJhY2Q0ZDcyMTMwYzZhZWI1OTZhNmMyOTIyYTRlMTYwZjg0NjIzYmE2OGM2MzFj"
       }
-    : undefined; // TODO: Add production manifest for farconnect.social
+    : {
+      header: "eyJmaWQiOjY1NzM3MCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGMzNzNDRjY4ZjNDYWIwODFiZTg2QzFmMEZjN2I2NWFDYTAzNTg3ZDEifQ",
+      payload: "eyJkb21haW4iOiJmYXJjb25uZWN0LnZlcmNlbC5hcHAifQ",
+      signature: "MHg2YjdjMzVmOWQ2NzZiMWEyNmMyMDhkNzVmOGM4OWZiMzIxZWM2ZjUyNThhMjU2MDA5ZGQ0MzkwMTEwNDJhN2NmNjk2N2ZmZGY1ZTQxMzI4ZjJmMTk3NjEyODc2OTZiODhmZWI2NGIxODA0OGM4MWQ0YjkzMWNjNTNjZTczNGIyZTFi"
+    }
 
 // --- UI Configuration ---
 /**
