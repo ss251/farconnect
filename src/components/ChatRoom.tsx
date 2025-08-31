@@ -596,48 +596,92 @@ export function ChatRoom({ roomId, roomName, onBack }: ChatRoomProps) {
         )}
       </div>
 
-      {/* Input area */}
-      <div className="p-4 border-t border-gray-200 dark:border-white/5 bg-white dark:elevation-1 dark:ios-backdrop flex gap-3">
-        <button
-          onClick={() => setShowTipModal(true)}
-          disabled={!userId}
-          className="p-3 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors disabled:opacity-50"
-          title="Request tip"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700 dark:text-gray-300">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 6v6l4 2"/>
-            <path d="M16 12a4 4 0 0 1-8 0"/>
-            <path d="M12 2v4"/>
-            <path d="M12 18v4"/>
-          </svg>
-        </button>
-        <input
-          ref={inputRef}
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              sendMessage();
-            }
-          }}
-          placeholder="Message"
-          disabled={!userId || isSending}
-          className="flex-1 px-5 py-3 bg-gray-100 dark:elevation-2 border border-transparent dark:border-white/5 rounded-3xl text-base text-black dark:text-white outline-none disabled:opacity-50 transition-premium focus:border-sky-500/30 dark:focus:border-sky-500/30 dark:focus:glow-sm"
-        />
-        <button
-          onClick={sendMessage}
-          disabled={!inputMessage.trim() || !userId || isSending}
-          className={`px-6 py-3 rounded-3xl font-semibold transition-premium ${
-            (!inputMessage.trim() || !userId || isSending) 
-              ? 'bg-gray-300 dark:bg-white/5 text-gray-500 dark:text-gray-500 cursor-not-allowed' 
-              : 'bg-sky-500 text-white hover:bg-sky-400 cursor-pointer shadow-lg hover:shadow-sky-500/25 hover:scale-105 active:scale-100'
-          }`}
-        >
-          {isSending ? '...' : 'Send'}
-        </button>
+      {/* Input area - ChatGPT style with buttons inside */}
+      <div className="p-5 ">
+        <div className="relative flex items-center bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-3xl transition-all focus-within:border-primary dark:focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+          {/* Input field - no box/border styling */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
+            placeholder="Message"
+            disabled={!userId || isSending}
+            className="flex-1 px-4 py-3 bg-transparent text-base text-black dark:text-white outline-none disabled:opacity-50 placeholder:text-gray-500 dark:placeholder:text-gray-400"
+          />
+          
+          {/* Buttons container - conditional rendering based on message content */}
+          {inputMessage.trim() ? (
+            <>
+              {/* USDC Tip Button - visible when there's content */}
+              <button
+                onClick={() => setShowTipModal(true)}
+                disabled={!userId}
+                className="mr-2 flex items-center justify-center w-8 h-8 rounded-full bg-[#2775CA] hover:bg-[#2775CA]/90 text-white disabled:opacity-50"
+                title="Request USDC tip"
+              >
+                <span className="text-sm font-bold">$</span>
+              </button>
+              
+              {/* Send Button - visible when there's content */}
+              <button
+                onClick={sendMessage}
+                disabled={!userId || isSending}
+                className={`mr-2 group flex items-center justify-center w-8 h-8 rounded-full disabled:opacity-50 ${
+              (() => {
+                const hasContent = inputMessage.trim().length > 0;
+                
+                if (isSending) {
+                  return hasContent 
+                    ? "bg-primary text-white"
+                    : "bg-gray-400 dark:bg-gray-600 text-white";
+                }
+                
+                if (hasContent) {
+                  return "bg-primary hover:bg-primary/90 text-white";
+                }
+                
+                // No content: transparent
+                return "bg-transparent text-gray-400 dark:text-gray-500";
+              })()
+            }`}
+            title={inputMessage.trim() ? "Send message" : ""}
+          >
+            {isSending ? (
+              // Loader2 style spinner
+              <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : inputMessage.trim() ? (
+              // ArrowUp when there's content
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              </svg>
+            ) : (
+              // No icon when empty
+              null
+            )}
+              </button>
+            </>
+          ) : (
+            /* USDC Tip Button only - when no message content */
+            <button
+              onClick={() => setShowTipModal(true)}
+              disabled={!userId}
+              className="mr-2 flex items-center justify-center w-8 h-8 rounded-full bg-[#2775CA] hover:bg-[#2775CA]/90 text-white disabled:opacity-50"
+              title="Request USDC tip"
+            >
+              <span className="text-sm font-bold">$</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tip Request Modal */}
