@@ -83,15 +83,15 @@
     box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
   }
   
-  /* Premium gradients */
+  /* Premium gradients using testr blue */
   .gradient-premium {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2E86AB 0%, #1E5F7E 100%);
   }
   
   .gradient-dark {
     background: linear-gradient(180deg, 
-      rgba(15, 15, 20, 1) 0%, 
-      rgba(20, 20, 28, 1) 100%);
+      rgb(17, 24, 39) 0%, 
+      rgb(31, 41, 55) 100%);
   }
   
   .gradient-subtle {
@@ -130,21 +130,21 @@
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
   }
   
-  /* Elevation levels */
+  /* Elevation levels matching testr */
   .elevation-0 {
-    @apply dark:bg-[#0a0a0f];
+    @apply bg-gray-900;
   }
   
   .elevation-1 {
-    @apply dark:bg-[#13131a];
+    @apply bg-gray-800;
   }
   
   .elevation-2 {
-    @apply dark:bg-[#1a1a24];
+    @apply bg-gray-950;
   }
   
   .elevation-3 {
-    @apply dark:bg-[#20202d];
+    @apply bg-gray-700;
   }
   
   /* Premium button styles */
@@ -165,13 +165,13 @@
   
   /* Message bubble styles */
   .message-bubble {
-    @apply dark:bg-gradient-to-br dark:from-gray-800/90 dark:to-gray-800/70;
-    @apply dark:border dark:border-gray-700/30;
+    @apply bg-gradient-to-br from-gray-800/90 to-gray-800/70;
+    @apply border border-gray-700/30;
   }
   
   .message-bubble-own {
-    @apply dark:bg-gradient-to-br dark:from-violet-600/20 dark:to-purple-600/10;
-    @apply dark:border dark:border-violet-500/20;
+    @apply bg-gradient-to-br from-primary/20 to-primary-dark/10;
+    @apply border border-primary/20;
   }
 }
 

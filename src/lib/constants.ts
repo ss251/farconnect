@@ -19,10 +19,15 @@ import { type AccountAssociation } from '@farcaster/miniapp-core/src/manifest';
 export const APP_URL: string = process.env.NEXT_PUBLIC_URL!;
 
 /**
+ * Check if we're in development environment
+ */
+const isDev = process.env.NODE_ENV === 'development';
+
+/**
  * The name of the mini app as displayed to users.
  * Used in titles, headers, and app store listings.
  */
-export const APP_NAME: string = 'farconnect';
+export const APP_NAME: string = isDev ? 'farconnect test' : 'farconnect';
 
 /**
  * A brief description of the mini app's functionality.
@@ -65,15 +70,21 @@ export const APP_SPLASH_URL: string = `${APP_URL}/splash.png`;
  * Background color for the splash screen.
  * Used as fallback when splash image is loading.
  */
-export const APP_SPLASH_BACKGROUND_COLOR: string = '#f7f7f7';
+export const APP_SPLASH_BACKGROUND_COLOR: string = '#1C1C1C';
 
 /**
  * Account association for the mini app.
  * Used to associate the mini app with a Farcaster account.
  * If not provided, the mini app will be unsigned and have limited capabilities.
  */
-export const APP_ACCOUNT_ASSOCIATION: AccountAssociation | undefined =
-  undefined;
+export const APP_ACCOUNT_ASSOCIATION: AccountAssociation | undefined = 
+  process.env.NODE_ENV === 'development' 
+    ? {
+        header: "eyJmaWQiOjY1NzM3MCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGMzNzNDRjY4ZjNDYWIwODFiZTg2QzFmMEZjN2I2NWFDYTAzNTg3ZDEifQ",
+        payload: "eyJkb21haW4iOiJmYXJjb25uZWN0Lm5ncm9rLmFwcCJ9",
+        signature: "MHhjOWY1ZmM4YTg5MWQ2OWZiZWQ0ZTFhMGI0NWI4MGQzMDcyMGQ1NjlhYjNlZDk1YjkwNDU0OTU5ZWQyOGFmY2Q0MjI5NWY0MjFhM2M0NzNkZDJlZTJhY2Q0ZDcyMTMwYzZhZWI1OTZhNmMyOTIyYTRlMTYwZjg0NjIzYmE2OGM2MzFj"
+      }
+    : undefined; // TODO: Add production manifest for farconnect.social
 
 // --- UI Configuration ---
 /**

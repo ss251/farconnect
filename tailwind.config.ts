@@ -22,14 +22,29 @@ export default {
   theme: {
   	extend: {
   		colors: {
-  			// Main theme color - change this to update the entire app's color scheme
-  			primary: "#8b5cf6", // Main brand color
-  			"primary-light": "#a78bfa", // For hover states
-  			"primary-dark": "#7c3aed", // For active states
+  			// Main theme color - testr blue theme
+  			primary: "#2E86AB", // testr blue
+  			"primary-light": "#4A9FC5", // For hover states
+  			"primary-dark": "#1E5F7E", // For active states
   			
-  			// Secondary colors for backgrounds and text
-  			secondary: "#f8fafc", // Light backgrounds
-  			"secondary-dark": "#334155", // Dark backgrounds
+  			// Gray scale for UI elements (from testr)
+  			gray: {
+  				50: '#FAFAFA',
+  				100: '#F5F5F5',
+  				200: '#E5E5E5',
+  				300: '#D4D4D4',
+  				400: '#A3A3A3',
+  				500: '#737373',
+  				600: '#525252',
+  				700: '#404040',
+  				800: '#262626',
+  				900: '#171717',
+  				950: '#0A0A0A',
+  			},
+  			
+  			// Background colors
+  			"bg-light": "#F7F7F7", // Light backgrounds
+  			"bg-dark": "#1C1C1C", // Dark backgrounds
   			
   			// Legacy CSS variables for backward compatibility
   			background: 'var(--background)',

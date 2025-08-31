@@ -201,16 +201,27 @@ declare module 'next-auth' {
 
 function getDomainFromUrl(urlString: string | undefined): string {
   if (!urlString) {
-    console.warn('NEXTAUTH_URL is not set, using localhost:3000 as fallback');
-    return 'localhost:3000';
+    // Try NEXT_PUBLIC_URL first, then fallback
+    const fallbackUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+    console.warn('NEXTAUTH_URL is not set, using fallback:', fallbackUrl);
+    try {
+      return new URL(fallbackUrl).hostname;
+    } catch {
+      return 'localhost:3000';
+    }
   }
   try {
     const url = new URL(urlString);
     return url.hostname;
   } catch (error) {
     console.error('Invalid NEXTAUTH_URL:', urlString, error);
-    console.warn('Using localhost:3000 as fallback');
-    return 'localhost:3000';
+    const fallbackUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+    console.warn('Using fallback:', fallbackUrl);
+    try {
+      return new URL(fallbackUrl).hostname;
+    } catch {
+      return 'localhost:3000';
+    }
   }
 }
 
@@ -274,7 +285,7 @@ export const authOptions: AuthOptions = {
               ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
               : process.env.VERCEL_URL
                 ? `https://${process.env.VERCEL_URL}`
-                : process.env.NEXTAUTH_URL || `http://localhost:${process.env.PORT ?? 3000}`;
+                : process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || `http://localhost:${process.env.PORT ?? 3000}`;
 
           const domain = getDomainFromUrl(baseUrl);
 

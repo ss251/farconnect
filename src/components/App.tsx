@@ -4,8 +4,6 @@ import { useMiniApp } from '@neynar/react';
 import { Welcome } from '~/components/Welcome';
 import { ChatHub } from '~/components/ChatHub';
 import { useState, useEffect, useRef } from 'react';
-import { ThemeProvider } from '~/contexts/ThemeContext';
-import { ThemeToggle } from './ThemeToggle';
 
 export default function App() {
   const { isSDKLoaded, context } = useMiniApp();
@@ -71,35 +69,30 @@ export default function App() {
   // Loading state - minimal
   if (!isSDKLoaded || isVerified === null) {
     return (
-      <ThemeProvider>
-        <div className="flex items-center justify-center h-screen bg-white dark:gradient-dark">
-          <div className="relative">
-            <div className="w-12 h-12 border-2 border-gray-200 dark:border-violet-500/30 border-t-violet-600 dark:border-t-violet-400 rounded-full animate-spin"></div>
-            <div className="absolute inset-0 w-12 h-12 rounded-full dark:glow-accent animate-pulse"></div>
-          </div>
+      <div className="flex items-center justify-center h-screen gradient-dark">
+        <div className="relative">
+          <div className="w-12 h-12 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          <div className="absolute inset-0 w-12 h-12 rounded-full glow-accent animate-pulse"></div>
         </div>
-      </ThemeProvider>
+      </div>
     );
   }
 
   return (
-    <ThemeProvider>
-      <div
-        className="fixed inset-0 flex flex-col bg-white dark:elevation-0 transition-colors"
-        style={{
-          paddingTop: context?.client.safeAreaInsets?.top ?? 0,
-          paddingLeft: context?.client.safeAreaInsets?.left ?? 0,
-          paddingRight: context?.client.safeAreaInsets?.right ?? 0,
-          // NO padding bottom - let the keyboard push up naturally
-        }}
-      >
-        <ThemeToggle />
-        {!isVerified ? (
-          <Welcome onVerified={() => setIsVerified(true)} />
-        ) : (
-          <ChatHub />
-        )}
-      </div>
-    </ThemeProvider>
+    <div
+      className="fixed inset-0 flex flex-col elevation-0 transition-colors"
+      style={{
+        paddingTop: context?.client.safeAreaInsets?.top ?? 0,
+        paddingLeft: context?.client.safeAreaInsets?.left ?? 0,
+        paddingRight: context?.client.safeAreaInsets?.right ?? 0,
+        // NO padding bottom - let the keyboard push up naturally
+      }}
+    >
+      {!isVerified ? (
+        <Welcome onVerified={() => setIsVerified(true)} />
+      ) : (
+        <ChatHub />
+      )}
+    </div>
   );
 }
